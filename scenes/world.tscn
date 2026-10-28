@@ -1,0 +1,70 @@
+[gd_scene format=3 uid="uid://bsxh2ht01c05w"]
+
+[ext_resource type="Script" uid="uid://03e8yhumxrbw" path="res://gd-scripts/world.gd" id="1_tlwt5"]
+[ext_resource type="PackedScene" uid="uid://ddqk6ggqm7ywv" path="res://scenes/player.tscn" id="2_tlwt5"]
+[ext_resource type="Script" uid="uid://c6o3urp2odm81" path="res://gd-scripts/chunk_manager.gd" id="3_aqk2v"]
+[ext_resource type="Shader" uid="uid://d2yvv8pgy8qyf" path="res://shaders/water.gdshader" id="4_aqk2v"]
+[ext_resource type="Script" uid="uid://cvmjsl3kkbgom" path="res://gd-scripts/data_generator.gd" id="5_71j4m"]
+[ext_resource type="Script" uid="uid://b060hlp70pnia" path="res://gd-scripts/chunk_gen_timer.gd" id="6_qfnet"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_0rcdj"]
+sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
+ground_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
+
+[sub_resource type="Sky" id="Sky_22pdd"]
+sky_material = SubResource("ProceduralSkyMaterial_0rcdj")
+
+[sub_resource type="Environment" id="Environment_l57ed"]
+background_mode = 2
+sky = SubResource("Sky_22pdd")
+glow_enabled = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_bvixu"]
+render_priority = 0
+shader = ExtResource("4_aqk2v")
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_4f442"]
+material = SubResource("ShaderMaterial_bvixu")
+size = Vector2(128, 128)
+subdivide_width = 32
+subdivide_depth = 32
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_71j4m"]
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_qfnet"]
+frequency = 0.0085
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_i7141"]
+
+[node name="World" type="Node3D" unique_id=1042770701]
+script = ExtResource("1_tlwt5")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1278098969]
+environment = SubResource("Environment_l57ed")
+
+[node name="Player" parent="." unique_id=1376814677 instance=ExtResource("2_tlwt5")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.513693, 36.399086, 17.851868)
+
+[node name="ChunkManager" type="Node" parent="." unique_id=614476863]
+script = ExtResource("3_aqk2v")
+world_chunks = Vector3i(8, 6, 8)
+chunks_start = Vector3i(0, -2, 0)
+chunk_size = Vector3i(16, 16, 16)
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1591144170]
+transform = Transform3D(1, 0, 0, 0, 0.75127995, 0.65998363, 0, -0.65998363, 0.75127995, 0, 0, 0)
+
+[node name="Ocean" type="MeshInstance3D" parent="." unique_id=1796523497]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 64, 18, 64)
+mesh = SubResource("PlaneMesh_4f442")
+
+[node name="DataGenerator" type="Node" parent="." unique_id=469060567]
+script = ExtResource("5_71j4m")
+hm_noise = SubResource("FastNoiseLite_71j4m")
+_3d_noise = SubResource("FastNoiseLite_qfnet")
+p_radius = 100.0
+p_noise = SubResource("FastNoiseLite_i7141")
+p_height = 10.0
+
+[node name="ChunkGenTimer" type="Node" parent="." unique_id=1767622573]
+script = ExtResource("6_qfnet")

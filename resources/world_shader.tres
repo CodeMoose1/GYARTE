@@ -1,0 +1,10 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://bd5twvelky8cw"]
+
+[ext_resource type="Shader" uid="uid://bfkex3756ljyj" path="res://shaders/world_shader.gdshader" id="1_sih6j"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_sih6j")
+shader_parameter/turf_angle = 1.0
+shader_parameter/snow_altitude = 40.0
+shader_parameter/grass_altitude = 20.0

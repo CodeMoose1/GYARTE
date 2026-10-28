@@ -1,0 +1,11 @@
+[gd_scene format=3 uid="uid://xogttyqspwrt"]
+
+[ext_resource type="Script" uid="uid://ck67ibg1wa27" path="res://gd-scripts/mc.gd" id="1_jas4a"]
+
+[node name="Chunk" type="StaticBody3D" unique_id=1225635753]
+script = ExtResource("1_jas4a")
+cutoff = 0.5
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=84929619]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=2104664960]

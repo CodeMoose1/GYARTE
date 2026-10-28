@@ -1,0 +1,31 @@
+[gd_scene format=3 uid="uid://ddqk6ggqm7ywv"]
+
+[ext_resource type="Script" uid="uid://cq0pys422f52d" path="res://gd-scripts/player.gd" id="1_4flbx"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_4f442"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_4f442"]
+radial_segments = 8
+rings = 4
+
+[node name="Player" type="CharacterBody3D" unique_id=1376814677]
+script = ExtResource("1_4flbx")
+mouse_sensetivity = 0.005
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1730895796]
+shape = SubResource("CapsuleShape3D_4f442")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1337114188]
+mesh = SubResource("CapsuleMesh_4f442")
+
+[node name="Neck" type="Node3D" parent="." unique_id=1881696150]
+
+[node name="Head" type="Node3D" parent="Neck" unique_id=750235870]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.722945, 0)
+
+[node name="Camera3D" type="Camera3D" parent="Neck/Head" unique_id=1167098920]
+current = true
+
+[node name="RayCast3D" type="RayCast3D" parent="Neck/Head" unique_id=435019178]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0)
+target_position = Vector3(0, -50, 0)
