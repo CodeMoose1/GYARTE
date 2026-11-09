@@ -8,8 +8,10 @@ class_name Chunk
 @export var cutoff: float = 0.0
 
 var manager: ChunkManager
+var data_access: DataAccess
 var chunk_pos: Vector3i
 var arr_mesh: ArrayMesh
+var main_chunk: PackedFloat32Array
 
 var mat = preload("res://resources/world_shader.tres")
 
@@ -272,19 +274,19 @@ const TriangleTable: Array[Array] = [
 	[-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
 ]
 
-const EdgeVertexIndices: Array[Array] = [
-	[0, 4],
-	[4, 5],
-	[1, 5],
-	[0, 1],
-	[2, 6],
-	[6, 7],
-	[3, 7],
-	[2, 3],
-	[0, 2],
-	[4, 6],
-	[5, 7],
-	[1, 3],
+const EdgeVertexIndices: Array[Vector2i] = [
+	Vector2i(0, 4),
+	Vector2i(4, 5),
+	Vector2i(1, 5),
+	Vector2i(0, 1),
+	Vector2i(2, 6),
+	Vector2i(6, 7),
+	Vector2i(3, 7),
+	Vector2i(2, 3),
+	Vector2i(0, 2),
+	Vector2i(4, 6),
+	Vector2i(5, 7),
+	Vector2i(1, 3),
 ]	
 	
 # Second vectors are the interpolated axis
@@ -304,8 +306,9 @@ const EdgePositions: Array[Array] = [
 ]
 
 
-func init(cm: ChunkManager, chunk: Vector3i) -> void:
+func init(cm: ChunkManager, chunk: Vector3i, da: DataAccess) -> void:
 	manager = cm
+	data_access = da
 	chunk_pos = chunk
 
 func _ready() -> void:	
@@ -371,10 +374,10 @@ func _set_cube_values(pos: Vector3i) -> void:
 					# Gets the voxel index in the neighbour
 					var neighbour_pos: Vector3i = Vector3i(x+pos.x - manager.chunk_size.x*neighbour.x, y+pos.y - manager.chunk_size.y*neighbour.y, z+pos.z - manager.chunk_size.z*neighbour.z)
 					var neighbour_index: int = neighbour_pos.x + neighbour_pos.y * manager.chunk_size.x + neighbour_pos.z * manager.chunk_size.x * manager.chunk_size.y
-					value = manager.chunk_data[chunk_pos + neighbour][neighbour_index]
+					value = data_access.GetDataIndex(chunk_pos + neighbour, neighbour_index)
 					
 				else:
-					value = manager.chunk_data[chunk_pos][x+pos.x + (y+pos.y)*(manager.chunk_size.x) + (z+pos.z)*(manager.chunk_size.x)*(manager.chunk_size.y)]
+					value = main_chunk[x+pos.x + (y+pos.y)*(manager.chunk_size.x) + (z+pos.z)*(manager.chunk_size.x)*(manager.chunk_size.y)]
 				
 				cube_values[index] = value
 				index += 1
@@ -396,7 +399,7 @@ func _get_cube_case() -> int:
 
 
 func create_mesh() -> void:
-	
+	main_chunk = data_access.GetChunk(chunk_pos)
 	#var start_time: int = Time.get_ticks_msec()
 	
 	var vertices: PackedVector3Array = []
