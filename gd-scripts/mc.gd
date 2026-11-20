@@ -5,7 +5,7 @@ class_name Chunk
 @onready var mesh_instance: MeshInstance3D = $MeshInstance3D
 @onready var coll_shape: CollisionShape3D = $CollisionShape3D
 
-@export var cutoff: float = 0.0
+@export var cutoff: float = 0.5
 
 var manager: ChunkManager
 var data_access: DataAccess
@@ -13,7 +13,7 @@ var chunk_pos: Vector3i
 var arr_mesh: ArrayMesh
 var main_chunk: PackedFloat32Array
 
-var mat = preload("res://resources/world_shader.tres")
+var mat: Material = preload("res://resources/world_shader.tres")
 
 const TriangleTable: Array[Array] = [
 	[-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],

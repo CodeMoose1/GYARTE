@@ -51,8 +51,6 @@ script = ExtResource("3_aqk2v")
 world_chunks = Vector3i(8, 6, 8)
 chunks_start = Vector3i(0, -2, 0)
 chunk_size = Vector3i(16, 16, 16)
-voxel_size = null
-n_threads = null
 
 [node name="DataAccess" type="Node" parent="ChunkManager" unique_id=502001494]
 script = ExtResource("4_i7141")

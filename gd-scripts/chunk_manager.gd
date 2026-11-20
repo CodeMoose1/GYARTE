@@ -17,7 +17,7 @@ var thread: Thread = Thread.new()
 #var remeshing_chunks: Dictionary[Vector3i, bool] = {}
 
 #var chunk_data: Dictionary[Vector3i, PackedFloat32Array] = {}
-var chunks: Dictionary[Vector3i, Chunk] = {}
+var chunks: Dictionary = {}
 
 func _ready() -> void:
 	thread.start(generate_world)
@@ -41,7 +41,7 @@ func create_chunk(chunk_pos: Vector3i):
 			for z: int in [-1, 0, 1]:
 				if not data_access.ChunkExists(Vector3i(chunk_pos.x+x, chunk_pos.y+y, chunk_pos.z+z)):
 					return
-	var chunk: Chunk = chunk_scene.instantiate()
+	var chunk = chunk_scene.instantiate()
 	chunks[chunk_pos] = chunk
 	chunk.position = Vector3(chunk_pos.x*chunk_size.x, chunk_pos.y*chunk_size.y, chunk_pos.z*chunk_size.z)*voxel_size
 	chunk.init(self, chunk_pos, data_access)

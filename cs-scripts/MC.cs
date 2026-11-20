@@ -3,6 +3,7 @@ using Godot.NativeInterop;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Runtime.InteropServices;
 
 public partial class MC : StaticBody3D
@@ -12,6 +13,10 @@ public partial class MC : StaticBody3D
 	DataAccess dataAccess;
 	Vector3I chunkPos;
 	MeshInstance3D meshInstance;
+	CollisionShape3D collShape;
+	float[] mainChunk;
+
+	Material mat = GD.Load<Material>("res://resources/world_shader.tres");
 	
 	ArrayMesh arr_mesh;
 
@@ -307,6 +312,7 @@ public partial class MC : StaticBody3D
 	public override void _Ready()
 	{
 		meshInstance = GetNode<MeshInstance3D>("MeshInstance3D");
+		collShape = GetNode<CollisionShape3D>("CollisionShape3D");
 		set_mesh();
 	}
 
@@ -322,9 +328,12 @@ public partial class MC : StaticBody3D
 		if (arr_mesh == null)
 		{
 			meshInstance.Mesh = null;
+			collShape.Shape = null;
 			return;
 		}
+		arr_mesh.SurfaceSetMaterial(0, mat);
 		meshInstance.Mesh = arr_mesh;
+		collShape.Shape = arr_mesh.CreateTrimeshShape();
 	}
 	Vector3 GetVertexPos(int edge, double value1, double value2)
 	{
@@ -333,24 +342,132 @@ public partial class MC : StaticBody3D
 		return (Vector3)EdgePositions[edge, 0] + (Vector3)EdgePositions[edge, 1] * (float)value;
 	}
 
+	float[] cubeValues = new float[8];
 	void SetCubeValues(Vector3I pos)
+	{	
+		Vector3I chunkSize = (Vector3I)chunkManager.Get("chunk_size");
+		int index = 0;
+		for (int z = pos.Z; z <= pos.Z+1; z++)
+		{
+			for (int y = pos.Y; y <= pos.Y+1; y++)
+			{
+				for (int x = pos.X; x <= pos.X+1; x++)
+				{
+					float value;
+					if (x < 0 || x >= chunkSize.X || y < 0 || y >= chunkSize.Y || z < 0 || z >= chunkSize.Z)
+					{
+						Vector3I neighbour = new Vector3I(x >= chunkSize.X?1:x<0?-1:0, y >= chunkSize.Y?1:y<0?-1:0, z >= chunkSize.Z?1:z<0?-1:0);
+						Vector3I neighbourPos = new Vector3I(x - chunkSize.X*neighbour.X, y - chunkSize.Y*neighbour.Y, z - chunkSize.Z*neighbour.Z);
+						int neighbourIndex = neighbourPos.X + neighbourPos.Y * chunkSize.X + neighbourPos.Z * chunkSize.X * chunkSize.Y;
+						value = dataAccess.GetDataIndex(chunkPos + neighbour, neighbourIndex);
+					}
+					else
+					{
+						value = mainChunk[x + y*chunkSize.X + z * chunkSize.X * chunkSize.Y];
+					}
+					cubeValues[index] = value;
+					index++;
+				}
+			}
+		} 	
+	}
+
+	int GetCubeCase()
 	{
-		
+		int type = 0;
+		type |= cubeValues[0] > cutoff? 1:0;
+		type |= (cubeValues[1] > cutoff? 1:0) << 1;
+		type |= (cubeValues[2] > cutoff? 1:0) << 2;
+		type |= (cubeValues[3] > cutoff? 1:0) << 3;
+		type |= (cubeValues[4] > cutoff? 1:0) << 4;
+		type |= (cubeValues[5] > cutoff? 1:0) << 5;
+		type |= (cubeValues[6] > cutoff? 1:0) << 6;
+		type |= (cubeValues[7] > cutoff? 1:0) << 7;
+
+		return type;
+	
 	}
 	public void create_mesh()
 	{
-		godot_packed_vector3_array vertices;
-		godot_packed_vector3_array normals;
-		godot_packed_int32_array indices;
+		mainChunk = dataAccess.GetChunk(chunkPos);
 
-		Dictionary<Vector3, int> vertex_index;
+		List<Vector3> vertices = new List<Vector3>();
+		List<Vector3> normals = new List<Vector3>();
+		List<int> indices = new List<int>();
+		
+
+		Dictionary<Vector3, int> vertexIndex = new Dictionary<Vector3, int>();
 
 		Vector3I chunkSize = (Vector3I)chunkManager.Get("chunk_size");
+		float voxelSize = (float)chunkManager.Get("voxel_size");
 
-		for (int z = 0; z < chunkSize[2]; z++)
+		for (int z = 0; z < chunkSize.Z; z++)
 		{
-			
+			for (int y = 0; y < chunkSize.Y; y++)
+			{
+				for (int x = 0; x < chunkSize.X; x++)
+				{
+					SetCubeValues(new Vector3I(x, y, z));
+					int type = GetCubeCase();
+
+					int index = 0;
+					while (TriangleTable[type, index] != -1)
+					{
+						int edge = TriangleTable[type, index];
+						float a = cubeValues[EdgeVertexIndices[edge].X];
+						float b = cubeValues[EdgeVertexIndices[edge].Y];
+
+						Vector3 vertexGridPos = GetVertexPos(edge, a, b) + new Vector3(x, y, z);
+						Vector3 vertexPos = vertexGridPos * voxelSize;
+
+						// outside normals TODO
+
+						if (!vertexIndex.ContainsKey(vertexPos))
+						{
+							vertexIndex[vertexPos] = vertices.Count;
+							normals.Add(Vector3.Zero);
+							vertices.Add(vertexPos);
+						}
+						indices.Add(vertexIndex[vertexPos]);
+						index ++;
+
+					}
+
+				}
+			}
 		}
+
+		// inside normals
+		for (int i = 0; i < indices.Count; i += 3)
+		{
+			Vector3 vert1 = vertices[indices[i]];
+			Vector3 vert2 = vertices[indices[i + 1]];
+			Vector3 vert3 = vertices[indices[i + 2]];
+
+			Vector3 edge1 = vert1 - vert2;
+			Vector3 edge2 = vert1 - vert3;
+			
+			Vector3 normal = edge2.Cross(edge1);
+			normals[indices[i]] += normal;
+			normals[indices[i + 1]] += normal;
+			normals[indices[i + 2]] += normal;
+		}
+
+		if (vertices.Count == 0)
+		{
+			arr_mesh = null;
+			return;
+		}
+		arr_mesh = new ArrayMesh();
+		Godot.Collections.Array arrays = [];
+		arrays.Resize((int)Mesh.ArrayType.Max);
+		arrays[(int)Mesh.ArrayType.Vertex] = vertices.ToArray<Vector3>();
+		arrays[(int)Mesh.ArrayType.Normal] = normals.ToArray<Vector3>();
+		arrays[(int)Mesh.ArrayType.Index] = indices.ToArray<int>();
+
+		// Create the Mesh.
+		arr_mesh.AddSurfaceFromArrays(Mesh.PrimitiveType.Triangles, arrays);
+		
 	}
 
 

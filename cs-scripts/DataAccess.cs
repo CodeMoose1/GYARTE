@@ -35,6 +35,10 @@ public partial class DataAccess : Node
 	{
 		return 0f;
 	}
+	public float GetDataPosGlobal(Vector3I pos)
+	{
+		return 0f;
+	}
 
 	public bool ChunkExists(Vector3I chunkPos)
 	{
