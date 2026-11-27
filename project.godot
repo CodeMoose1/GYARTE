@@ -15,6 +15,10 @@ run/main_scene="uid://bsxh2ht01c05w"
 config/features=PackedStringArray("4.7", "C#", "Forward Plus")
 config/icon="res://icon.svg"
 
+[autoload]
+
+TickEmitter="*uid://d3nrsomvkqph4"
+
 [display]
 
 window/stretch/mode="canvas_items"

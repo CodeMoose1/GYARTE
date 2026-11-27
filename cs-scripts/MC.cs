@@ -342,6 +342,36 @@ public partial class MC : StaticBody3D
 		return (Vector3)EdgePositions[edge, 0] + (Vector3)EdgePositions[edge, 1] * (float)value;
 	}
 
+	Vector3I[] NeighboursOfEdge(Vector3 edgePos, Vector3I interpAxis){
+		Vector3I[] voxels = new Vector3I[2];
+		Vector3I maxAxies = Vector3I.Zero;
+		Vector3I minAxies = Vector3I.Zero;
+		Vector3I naturalAxies = Vector3I.One;
+
+		naturalAxies -= interpAxis;
+
+		for (int i = 0; i < 3; i++){
+			if (interpAxis[i] == 1){
+				naturalAxies[i] = 0;
+			} else if (edgePos[i] == ((Vector3)chunkManager.Get("chunk_size"))[i]){ 
+				maxAxies[i] = 1; 
+				naturalAxies[i] = 0;
+			} else if (edgePos[i] == 0f){
+				minAxies[i] = 1;
+				naturalAxies[i] = 0;
+			}
+		}
+		for (int offset = 0; offset < 2; offset++){
+			Vector3I voxel = Vector3I.Zero;
+			for (int i = 0; i < 3; i++){
+				int v = Mathf.FloorToInt(edgePos[i])*interpAxis[i] + (int)(edgePos[i] * maxAxies[i]) + (int)((edgePos[i]-1) * minAxies[i]) + (int)(edgePos[i] * naturalAxies[i] - offset * naturalAxies[i]);
+				voxel[i] = v;
+			}
+			voxels[offset] = voxel;
+		}
+		return voxels;
+	}
+
 	float[] cubeValues = new float[8];
 	void SetCubeValues(Vector3I pos)
 	{	
@@ -395,8 +425,10 @@ public partial class MC : StaticBody3D
 		List<Vector3> normals = new List<Vector3>();
 		List<int> indices = new List<int>();
 		
-
 		Dictionary<Vector3, int> vertexIndex = new Dictionary<Vector3, int>();
+
+		HashSet<Vector3I> extraNormalCubes = new HashSet<Vector3I>();
+		Dictionary<Vector3, Vector3> extraNormals = new Dictionary<Vector3, Vector3>();
 
 		Vector3I chunkSize = (Vector3I)chunkManager.Get("chunk_size");
 		float voxelSize = (float)chunkManager.Get("voxel_size");
@@ -421,6 +453,14 @@ public partial class MC : StaticBody3D
 						Vector3 vertexPos = vertexGridPos * voxelSize;
 
 						// outside normals TODO
+						if (EdgePositions[edge, 0].X + x == 0 || EdgePositions[edge, 0].X + x == chunkSize.X || EdgePositions[edge, 0].Y + y == 0 || EdgePositions[edge, 0].Y + y == chunkSize.Y || EdgePositions[edge, 0].Z + z == 0 || EdgePositions[edge, 0].Z + z == chunkSize.Z)
+						{
+							foreach (Vector3I neighbour in NeighboursOfEdge(vertexGridPos, EdgePositions[edge, 1]))
+							{
+								extraNormalCubes.Add(neighbour);
+							}
+							extraNormals[vertexPos] = Vector3.Zero;
+						}
 
 						if (!vertexIndex.ContainsKey(vertexPos))
 						{
@@ -434,6 +474,37 @@ public partial class MC : StaticBody3D
 					}
 
 				}
+			}
+		}
+
+		foreach (Vector3I neighbour in extraNormalCubes)
+		{
+			SetCubeValues(neighbour);
+			int type = GetCubeCase();
+
+			int i = 0;
+			while (TriangleTable[type, i] != -1)
+			{
+				int edge1 = TriangleTable[type, i];
+				int edge2 = TriangleTable[type, i+1];
+				int edge3 = TriangleTable[type, i+2];
+				Vector3 vert1 = (GetVertexPos(edge1, cubeValues[EdgeVertexIndices[edge1].X], cubeValues[EdgeVertexIndices[edge1].Y]) + (Vector3)neighbour) * voxelSize;
+				Vector3 vert2 = (GetVertexPos(edge2, cubeValues[EdgeVertexIndices[edge2].X], cubeValues[EdgeVertexIndices[edge2].Y]) + (Vector3)neighbour) * voxelSize;
+				Vector3 vert3 = (GetVertexPos(edge3, cubeValues[EdgeVertexIndices[edge3].X], cubeValues[EdgeVertexIndices[edge3].Y]) + (Vector3)neighbour) * voxelSize;
+				Vector3 normal = (vert1-vert3).Cross(vert1-vert2);
+				if (extraNormals.ContainsKey(vert1))
+				{
+					extraNormals[vert1] += normal;
+				}
+				if (extraNormals.ContainsKey(vert2))
+				{
+					extraNormals[vert2] += normal;
+				}
+				if (extraNormals.ContainsKey(vert3))
+				{
+					extraNormals[vert3] += normal;
+				}
+				i += 3;
 			}
 		}
 
@@ -451,6 +522,11 @@ public partial class MC : StaticBody3D
 			normals[indices[i]] += normal;
 			normals[indices[i + 1]] += normal;
 			normals[indices[i + 2]] += normal;
+		}
+
+		foreach (Vector3 pos in extraNormals.Keys)
+		{
+			normals[vertexIndex[pos]] += extraNormals[pos];
 		}
 
 		if (vertices.Count == 0)

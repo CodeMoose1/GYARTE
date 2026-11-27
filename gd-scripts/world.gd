@@ -5,8 +5,9 @@ extends Node3D
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
+	
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-
+	TickEmitter.connect("tick", tick)
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
@@ -17,5 +18,7 @@ func _process(delta: float) -> void:
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 		else:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+			
+func tick(count: int) -> void:
 	if Input.is_action_pressed("Dig"):
 		chunk_manager.dig(player.get_target_pos(), 5)

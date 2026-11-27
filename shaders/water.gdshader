@@ -5,7 +5,7 @@ shader_type spatial;
 void vertex() {
 	// Called for every vertex the material is visible on.
 	VERTEX.y += sin(VERTEX.x + TIME) * sin(VERTEX.z + TIME);
-	
+	// NORMAL = vec3(cos(VERTEX.x + TIME), cos(VERTEX.x +TIME) * cos(VERTEX.z + TIME), cos(VERTEX.z + TIME));
 }
 
 void fragment() {
@@ -14,6 +14,7 @@ void fragment() {
 	ALBEDO = vec3(0, 0, 0.5);
 	
 	ALPHA = 0.7;
+	
 }
 
 //void light() {

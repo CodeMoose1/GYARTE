@@ -30,12 +30,7 @@ size = Vector2(128, 128)
 subdivide_width = 32
 subdivide_depth = 32
 
-[sub_resource type="FastNoiseLite" id="FastNoiseLite_71j4m"]
-
-[sub_resource type="FastNoiseLite" id="FastNoiseLite_qfnet"]
-frequency = 0.0085
-
-[sub_resource type="FastNoiseLite" id="FastNoiseLite_i7141"]
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_4mrxx"]
 
 [node name="World" type="Node3D" unique_id=1042770701]
 script = ExtResource("1_tlwt5")
@@ -64,11 +59,7 @@ mesh = SubResource("PlaneMesh_4f442")
 
 [node name="DataGenerator" type="Node" parent="." unique_id=469060567]
 script = ExtResource("5_71j4m")
-hm_noise = SubResource("FastNoiseLite_71j4m")
-_3d_noise = SubResource("FastNoiseLite_qfnet")
-p_radius = 100.0
-p_noise = SubResource("FastNoiseLite_i7141")
-p_height = 10.0
+hm_noise = SubResource("FastNoiseLite_4mrxx")
 
 [node name="ChunkGenTimer" type="Node" parent="." unique_id=1767622573]
 script = ExtResource("6_qfnet")
